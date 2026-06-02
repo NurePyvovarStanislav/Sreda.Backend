@@ -1,10 +1,11 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Sreda.Backend.Application.Interfaces;
 using Sreda.Backend.Domain.Entities;
 
 namespace Sreda.Backend.Infrastructure.Persistence;
 
-public class SredaDbContext : DbContext
+public class SredaDbContext : DbContext, ISredaDbContext
 {
     public SredaDbContext(DbContextOptions<SredaDbContext> options) : base(options)
     {

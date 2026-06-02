@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Sreda.Backend.API.Common;
+using Sreda.Backend.Application;
 using Sreda.Backend.Infrastructure;
 using Sreda.Backend.Infrastructure.Persistence;
 
@@ -6,6 +8,8 @@ namespace Sreda.Backend.API
 {
     public class Program
     {
+        private const string CorsPolicyName = "SredaCorsPolicy";
+
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -16,12 +20,30 @@ namespace Sreda.Backend.API
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
+            builder.Services.AddApplication();
             builder.Services.AddInfrastructure(builder.Configuration);
+
+            builder.Services.AddProblemDetails();
+            builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+            // Безопасность строится на распознавании голоса и правах доступа,
+            // а не на CORS, поэтому к API может обращаться любой origin.
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(CorsPolicyName, policy =>
+                {
+                    policy.AllowAnyOrigin()
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
 
             var app = builder.Build();
 
-            // Применяем миграции автоматически при старте.
-            await ApplyMigrationsAsync(app);
+            // Применяем миграции и сидим базовые данные при старте.
+            await InitializeDatabaseAsync(app);
+
+            app.UseExceptionHandler();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -31,6 +53,8 @@ namespace Sreda.Backend.API
 
             app.UseHttpsRedirection();
 
+            app.UseCors(CorsPolicyName);
+
             app.UseAuthorization();
 
 
@@ -39,11 +63,12 @@ namespace Sreda.Backend.API
             await app.RunAsync();
         }
 
-        private static async Task ApplyMigrationsAsync(WebApplication app)
+        private static async Task InitializeDatabaseAsync(WebApplication app)
         {
             using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<SredaDbContext>();
             await dbContext.Database.MigrateAsync();
+            await DbSeeder.SeedAsync(dbContext);
         }
     }
 }

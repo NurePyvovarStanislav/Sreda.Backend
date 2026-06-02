@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Sreda.Backend.API/Sreda.Backend.API.csproj" />
+  <Project Path="Sreda.Backend.Application/Sreda.Backend.Application.csproj" />
+  <Project Path="Sreda.Backend.Contracts/Sreda.Backend.Contracts.csproj" />
+  <Project Path="Sreda.Backend.Domain/Sreda.Backend.Domain.csproj" />
+  <Project Path="Sreda.Backend.Infrastructure/Sreda.Backend.Infrastructure.csproj" />
+</Solution>

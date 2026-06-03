@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Sreda.Backend.API.Common;
+using Sreda.Backend.API.Hubs;
+using Sreda.Backend.API.Realtime;
 using Sreda.Backend.Application;
+using Sreda.Backend.Application.Interfaces;
 using Sreda.Backend.Infrastructure;
 using Sreda.Backend.Infrastructure.Persistence;
 
@@ -25,6 +28,10 @@ namespace Sreda.Backend.API
 
             builder.Services.AddProblemDetails();
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+            // Realtime: SignalR для журнала событий (дашборд).
+            builder.Services.AddSignalR();
+            builder.Services.AddScoped<IEventNotifier, SignalREventNotifier>();
 
             // Безопасность строится на распознавании голоса и правах доступа,
             // а не на CORS, поэтому к API может обращаться любой origin.
@@ -59,6 +66,7 @@ namespace Sreda.Backend.API
 
 
             app.MapControllers();
+            app.MapHub<EventsHub>("/hubs/events");
 
             await app.RunAsync();
         }

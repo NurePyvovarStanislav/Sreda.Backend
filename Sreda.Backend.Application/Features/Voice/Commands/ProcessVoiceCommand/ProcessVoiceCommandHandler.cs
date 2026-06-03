@@ -15,20 +15,20 @@ public class ProcessVoiceCommandHandler
     private readonly IIntentParser _intentParser;
     private readonly ICommandExecutor _commandExecutor;
     private readonly ISredaDbContext _dbContext;
-    private readonly IEventNotifier _eventNotifier;
+    private readonly IEventLogger _eventLogger;
 
     public ProcessVoiceCommandHandler(
         ISpeechToTextService speechToText,
         IIntentParser intentParser,
         ICommandExecutor commandExecutor,
         ISredaDbContext dbContext,
-        IEventNotifier eventNotifier)
+        IEventLogger eventLogger)
     {
         _speechToText = speechToText;
         _intentParser = intentParser;
         _commandExecutor = commandExecutor;
         _dbContext = dbContext;
-        _eventNotifier = eventNotifier;
+        _eventLogger = eventLogger;
     }
 
     public async Task<Result<VoiceProcessResponse>> Handle(
@@ -48,12 +48,12 @@ public class ProcessVoiceCommandHandler
             Status = CommandStatus.Pending
         };
         _dbContext.Commands.Add(command);
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
-        var events = new List<Event>
-        {
-            CreateEvent(command, EventType.VoiceRecognized, new { text = recognizedText }),
-            CreateEvent(command, EventType.CommandReceived, new { text = recognizedText })
-        };
+        await _eventLogger.LogAsync(EventType.VoiceRecognized, new { text = recognizedText },
+            command.Id, cancellationToken: cancellationToken);
+        await _eventLogger.LogAsync(EventType.CommandReceived, new { text = recognizedText },
+            command.Id, cancellationToken: cancellationToken);
 
         string response;
         var match = await _intentParser.ParseAsync(recognizedText, cancellationToken);
@@ -62,8 +62,9 @@ public class ProcessVoiceCommandHandler
         {
             command.Status = CommandStatus.Failed;
             response = "Команда не распознана.";
-            events.Add(CreateEvent(command, EventType.Error,
-                new { reason = "unrecognized", text = recognizedText }));
+            await _eventLogger.LogAsync(EventType.Error,
+                new { reason = "unrecognized", text = recognizedText },
+                command.Id, cancellationToken: cancellationToken);
         }
         else
         {
@@ -77,22 +78,15 @@ public class ProcessVoiceCommandHandler
             command.Status = execution.Status;
             response = execution.Response;
 
-            events.Add(CreateEvent(
-                command,
+            await _eventLogger.LogAsync(
                 execution.Success ? EventType.CommandExecuted : EventType.Error,
-                new { code = match.Command.Code, success = execution.Success }));
+                new { code = match.Command.Code, success = execution.Success },
+                command.Id, cancellationToken: cancellationToken);
         }
 
-        _dbContext.Events.AddRange(events);
+        // Фиксируем итоговый статус/аргументы команды (логгер использует тот же контекст).
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success(new VoiceProcessResponse(recognizedText, response));
     }
-
-    private static Event CreateEvent(Command command, EventType type, object payload) => new()
-    {
-        Command = command,
-        Type = type,
-        PayloadJson = JsonSerializer.Serialize(payload)
-    };
 }

@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IIntentParser, DbIntentParser>();
         services.AddSingleton<ICommandExecutor, BasicCommandExecutor>();
+        services.AddScoped<IEventLogger, EventLogger>();
 
         return services;
     }

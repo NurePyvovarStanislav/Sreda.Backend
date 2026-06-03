@@ -1,6 +1,8 @@
 using System.Reflection;
 using FluentValidation;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Sreda.Backend.Application.Common;
 using Sreda.Backend.Application.Common.Behaviors;
 using Sreda.Backend.Application.Interfaces;
 using Sreda.Backend.Application.Services;
@@ -9,7 +11,7 @@ namespace Sreda.Backend.Application;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
     {
         var assembly = Assembly.GetExecutingAssembly();
 
@@ -21,9 +23,18 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(assembly);
 
+        services.Configure<CommandResolverOptions>(
+            configuration.GetSection(CommandResolverOptions.SectionName));
+
         services.AddSingleton(TimeProvider.System);
-        services.AddScoped<IIntentParser, DbIntentParser>();
         services.AddSingleton<ICommandExecutor, BasicCommandExecutor>();
+
+        // Распознавание намерений (Этап 10 — AI Command Resolver).
+        services.AddScoped<ICommandResolver, CommandResolverService>();
+        services.AddScoped<ICommandAccessPolicy, CommandAccessPolicy>();
+        services.AddScoped<ICommandPipeline, CommandPipeline>();
+        services.AddSingleton<ISemanticCommandMatcher, NullSemanticCommandMatcher>();
+
         services.AddScoped<IEventLogger, EventLogger>();
 
         return services;

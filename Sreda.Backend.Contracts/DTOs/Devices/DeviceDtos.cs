@@ -34,3 +34,7 @@ public record DeviceStateDto(
 public record UpdateDeviceStateRequest(
     bool IsOnline,
     string? StateJson);
+
+public record SendDeviceCommandRequest(
+    string Command,
+    Dictionary<string, object?>? Parameters);

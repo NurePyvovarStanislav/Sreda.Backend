@@ -47,4 +47,11 @@ public class DevicesController : ApiControllerBase
         int id, [FromBody] UpdateDeviceStateRequest request, CancellationToken cancellationToken)
         => FromResult(await _mediator.Send(new UpdateDeviceStateCommand(
             id, request.IsOnline, request.StateJson), cancellationToken));
+
+    /// <summary>Отправляет команду устройству через шлюз (MQTT).</summary>
+    [HttpPost("{id:int}/command")]
+    public async Task<IActionResult> SendCommand(
+        int id, [FromBody] SendDeviceCommandRequest request, CancellationToken cancellationToken)
+        => FromResult(await _mediator.Send(new SendDeviceCommandCommand(
+            id, request.Command, request.Parameters), cancellationToken));
 }

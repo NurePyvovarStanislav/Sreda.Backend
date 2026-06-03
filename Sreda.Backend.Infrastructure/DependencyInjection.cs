@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Sreda.Backend.Application.Interfaces;
 using Sreda.Backend.Infrastructure.Integration;
 using Sreda.Backend.Infrastructure.Integration.Audio;
+using Sreda.Backend.Infrastructure.Integration.Mqtt;
 using Sreda.Backend.Infrastructure.Integration.Options;
 using Sreda.Backend.Infrastructure.Persistence;
 
@@ -25,8 +26,23 @@ public static class DependencyInjection
         services.AddScoped<ISredaDbContext>(sp => sp.GetRequiredService<SredaDbContext>());
 
         AddVoiceServices(services, configuration);
+        AddDeviceGateway(services, configuration);
 
         return services;
+    }
+
+    /// <summary>
+    /// Регистрирует MQTT-шлюз устройств (Device Gateway / IoT).
+    /// Один singleton используется и для исходящих команд (IDeviceGateway),
+    /// и как фоновый сервис, держащий подключение к брокеру.
+    /// </summary>
+    private static void AddDeviceGateway(IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<MqttOptions>(configuration.GetSection(MqttOptions.SectionName));
+
+        services.AddSingleton<MqttDeviceGateway>();
+        services.AddSingleton<IDeviceGateway>(sp => sp.GetRequiredService<MqttDeviceGateway>());
+        services.AddHostedService<MqttGatewayHostedService>();
     }
 
     /// <summary>

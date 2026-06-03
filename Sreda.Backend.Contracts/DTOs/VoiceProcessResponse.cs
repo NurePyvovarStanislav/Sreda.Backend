@@ -1,6 +1,12 @@
 namespace Sreda.Backend.Contracts.DTOs;
 
 /// <summary>
-/// Результат обработки голосовой команды: распознанный текст и ответ системы.
+/// Результат обработки команды: исходный текст, ответ системы, итоговый статус,
+/// сопоставленная команда и уверенность распознавания намерения.
 /// </summary>
-public record VoiceProcessResponse(string RecognizedText, string Response);
+public record VoiceProcessResponse(
+    string RecognizedText,
+    string Response,
+    string Status,
+    string? CommandCode,
+    double Confidence);

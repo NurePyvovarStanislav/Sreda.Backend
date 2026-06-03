@@ -2,6 +2,8 @@ using System.Reflection;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Sreda.Backend.Application.Common.Behaviors;
+using Sreda.Backend.Application.Interfaces;
+using Sreda.Backend.Application.Services;
 
 namespace Sreda.Backend.Application;
 
@@ -18,6 +20,10 @@ public static class DependencyInjection
         });
 
         services.AddValidatorsFromAssembly(assembly);
+
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<IIntentParser, DbIntentParser>();
+        services.AddSingleton<ICommandExecutor, BasicCommandExecutor>();
 
         return services;
     }

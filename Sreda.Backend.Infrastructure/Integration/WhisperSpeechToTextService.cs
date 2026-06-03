@@ -1,25 +1,29 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Sreda.Backend.Application.Interfaces;
+using Sreda.Backend.Infrastructure.Integration.Audio;
 using Sreda.Backend.Infrastructure.Integration.Options;
 
 namespace Sreda.Backend.Infrastructure.Integration;
 
 /// <summary>
 /// Распознавание речи через whisper.cpp (whisper-cli).
-/// Сохраняет входной аудиопоток во временный файл, запускает CLI,
-/// читает результирующий txt и возвращает распознанный текст.
+/// Сохраняет входной аудиопоток во временный файл, при необходимости конвертирует
+/// его в WAV 16 kHz mono через ffmpeg, запускает CLI и читает результат из txt.
 /// </summary>
 public class WhisperSpeechToTextService : ISpeechToTextService
 {
     private readonly WhisperOptions _options;
+    private readonly FfmpegAudioConverter _audioConverter;
     private readonly ILogger<WhisperSpeechToTextService> _logger;
 
     public WhisperSpeechToTextService(
         IOptions<WhisperOptions> options,
+        FfmpegAudioConverter audioConverter,
         ILogger<WhisperSpeechToTextService> logger)
     {
         _options = options.Value;
+        _audioConverter = audioConverter;
         _logger = logger;
     }
 
@@ -31,18 +35,36 @@ public class WhisperSpeechToTextService : ISpeechToTextService
         Directory.CreateDirectory(workingDirectory);
 
         var id = Guid.NewGuid().ToString("N");
-        var inputPath = Path.Combine(workingDirectory, $"{id}.wav");
+        var sourcePath = Path.Combine(workingDirectory, $"{id}.src");
+        var convertedPath = Path.Combine(workingDirectory, $"{id}.16k.wav");
         var outputPrefix = Path.Combine(workingDirectory, $"{id}_out");
         var outputTxtPath = $"{outputPrefix}.txt";
+        var usedConvertedFile = false;
 
         try
         {
-            await using (var fileStream = File.Create(inputPath))
+            await using (var fileStream = File.Create(sourcePath))
             {
                 await audioStream.CopyToAsync(fileStream, cancellationToken);
             }
 
-            var arguments = BuildArguments(inputPath, outputPrefix);
+            // Конвертируем только если аудио не в целевом формате (WAV 16 kHz mono PCM)
+            // и не в формате, который whisper читает сам (MP3/FLAC).
+            string audioPath;
+            if (AudioFormatDetector.CanUseDirectly(sourcePath))
+            {
+                audioPath = sourcePath;
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "Аудио не в целевом формате — конвертирую через ffmpeg в WAV 16 kHz mono.");
+                await _audioConverter.ConvertToWhisperWavAsync(sourcePath, convertedPath, cancellationToken);
+                audioPath = convertedPath;
+                usedConvertedFile = true;
+            }
+
+            var arguments = BuildArguments(audioPath, outputPrefix);
 
             var result = await ExternalProcessRunner.RunAsync(
                 _options.ExecutablePath,
@@ -74,7 +96,11 @@ public class WhisperSpeechToTextService : ISpeechToTextService
         }
         finally
         {
-            TryDelete(inputPath);
+            TryDelete(sourcePath);
+            if (usedConvertedFile)
+            {
+                TryDelete(convertedPath);
+            }
             TryDelete(outputTxtPath);
         }
     }

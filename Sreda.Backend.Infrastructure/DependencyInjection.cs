@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Sreda.Backend.Application.Interfaces;
 using Sreda.Backend.Infrastructure.Integration;
+using Sreda.Backend.Infrastructure.Integration.Audio;
 using Sreda.Backend.Infrastructure.Integration.Options;
 using Sreda.Backend.Infrastructure.Persistence;
 
@@ -36,6 +37,9 @@ public static class DependencyInjection
     {
         services.Configure<WhisperOptions>(configuration.GetSection(WhisperOptions.SectionName));
         services.Configure<PiperOptions>(configuration.GetSection(PiperOptions.SectionName));
+        services.Configure<FfmpegOptions>(configuration.GetSection(FfmpegOptions.SectionName));
+
+        services.AddSingleton<FfmpegAudioConverter>();
 
         var provider = configuration
             .GetSection(VoiceOptions.SectionName)

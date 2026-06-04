@@ -12,20 +12,21 @@ public class Device
     /// <summary>Уникальный технический код устройства.</summary>
     public string Code { get; set; } = null!;
 
+    /// <summary>Отображаемое имя по умолчанию (украинская локаль из <see cref="Localizations"/>).</summary>
     public string Name { get; set; } = null!;
 
     public DeviceType Type { get; set; }
 
-    /// <summary>Физическое расположение, например "кухня".</summary>
+    /// <summary>Расположение по умолчанию (украинская локаль).</summary>
     public string? Location { get; set; }
 
     public bool IsActive { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
-    /// <summary>Текущее состояние устройства (связь один-к-одному).</summary>
     public DeviceState? State { get; set; }
 
-    /// <summary>События, связанные с устройством.</summary>
+    public ICollection<DeviceLocalizedLabel> Localizations { get; set; } = new List<DeviceLocalizedLabel>();
+
     public ICollection<Event> Events { get; set; } = new List<Event>();
 }

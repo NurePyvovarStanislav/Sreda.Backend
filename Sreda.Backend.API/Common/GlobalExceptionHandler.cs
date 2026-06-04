@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace Sreda.Backend.API.Common;
 
 /// <summary>
-/// Глобальный обработчик исключений: преобразует исключения в ProblemDetails.
-/// Ошибки валидации (FluentValidation) → 400 с деталями полей, остальное → 500.
+/// Глобальний обробник винятків: перетворює винятки на ProblemDetails.
+/// Помилки валідації (FluentValidation) → 400, інше → 500.
 /// </summary>
 public class GlobalExceptionHandler : IExceptionHandler
 {

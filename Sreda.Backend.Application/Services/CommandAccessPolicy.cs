@@ -7,9 +7,8 @@ using Sreda.Backend.Domain.Enums;
 namespace Sreda.Backend.Application.Services;
 
 /// <summary>
-/// Политика доступа к командам. Приоритет: персональный override (явный
-/// разрешён/запрещён) важнее базового уровня доступа. Без пользователя
-/// действует уровень Guest.
+/// Політика доступу до команд. Пріоритет: персональний override (явно
+/// дозволено/заборонено) важливіший за базовий рівень доступу.
 /// </summary>
 public class CommandAccessPolicy : ICommandAccessPolicy
 {
@@ -27,10 +26,7 @@ public class CommandAccessPolicy : ICommandAccessPolicy
     {
         if (userId is null)
         {
-            // Анонимный вызов — права гостя.
-            return command.RequiredAccessLevel <= AccessLevel.Guest
-                ? AccessDecision.Allow()
-                : AccessDecision.Deny("Команда недоступна без идентификации пользователя.");
+            return AccessDecision.Deny("Користувача не визначено.");
         }
 
         var user = await _dbContext.Users
@@ -38,15 +34,14 @@ public class CommandAccessPolicy : ICommandAccessPolicy
 
         if (user is null)
         {
-            return AccessDecision.Deny($"Пользователь с Id {userId} не найден.");
+            return AccessDecision.Deny($"Користувача з Id {userId} не знайдено.");
         }
 
         if (!user.IsActive)
         {
-            return AccessDecision.Deny("Учётная запись пользователя неактивна.");
+            return AccessDecision.Deny("Обліковий запис користувача неактивний.");
         }
 
-        // Персональное переопределение имеет приоритет над уровнем доступа.
         var @override = await _dbContext.UserCommandOverrides
             .FirstOrDefaultAsync(
                 o => o.UserId == user.Id && o.AvailableCommandId == command.Id,
@@ -56,12 +51,12 @@ public class CommandAccessPolicy : ICommandAccessPolicy
         {
             return @override.IsAllowed
                 ? AccessDecision.Allow()
-                : AccessDecision.Deny("Команда явно запрещена для пользователя.");
+                : AccessDecision.Deny("Команду явно заборонено для користувача.");
         }
 
         return user.AccessLevel >= command.RequiredAccessLevel
             ? AccessDecision.Allow()
             : AccessDecision.Deny(
-                $"Недостаточный уровень доступа: требуется {command.RequiredAccessLevel}, у пользователя {user.AccessLevel}.");
+                $"Недостатній рівень доступу: потрібно {command.RequiredAccessLevel}, у користувача {user.AccessLevel}.");
     }
 }

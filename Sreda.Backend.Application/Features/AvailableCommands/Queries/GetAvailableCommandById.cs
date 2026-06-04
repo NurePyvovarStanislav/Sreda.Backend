@@ -30,7 +30,7 @@ public class GetAvailableCommandByIdQueryHandler
             .FirstOrDefaultAsync(cancellationToken);
 
         return command is null
-            ? Result.Failure<AvailableCommandDto>($"Команда с Id {request.Id} не найдена.")
+            ? Result.Failure<AvailableCommandDto>($"Команду з Id {request.Id} не знайдено.")
             : Result.Success(command);
     }
 }

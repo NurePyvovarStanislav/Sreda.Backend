@@ -26,7 +26,7 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Result<
             .FirstOrDefaultAsync(cancellationToken);
 
         return user is null
-            ? Result.Failure<UserDto>($"Пользователь с Id {request.Id} не найден.")
+            ? Result.Failure<UserDto>($"Користувача з Id {request.Id} не знайдено.")
             : Result.Success(user);
     }
 }

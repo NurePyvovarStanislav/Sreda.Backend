@@ -26,7 +26,7 @@ public class GetDeviceStateQueryHandler : IRequestHandler<GetDeviceStateQuery, R
             .FirstOrDefaultAsync(cancellationToken);
 
         return state is null
-            ? Result.Failure<DeviceStateDto>($"Состояние для устройства с Id {request.DeviceId} не найдено.")
+            ? Result.Failure<DeviceStateDto>($"Стан для пристрою з Id {request.DeviceId} не знайдено.")
             : Result.Success(state);
     }
 }

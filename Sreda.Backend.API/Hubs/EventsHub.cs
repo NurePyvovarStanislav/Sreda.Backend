@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.SignalR;
 namespace Sreda.Backend.API.Hubs;
 
 /// <summary>
-/// SignalR-хаб журнала событий. Клиенты (дашборд/панель) подписываются сюда
-/// и получают события через сообщение "ReceiveEvent".
+/// SignalR-хаб журналу подій. Клієнти (дашборд) підписуються сюди
+/// і отримують події через повідомлення "ReceiveEvent".
 /// </summary>
 public class EventsHub : Hub
 {

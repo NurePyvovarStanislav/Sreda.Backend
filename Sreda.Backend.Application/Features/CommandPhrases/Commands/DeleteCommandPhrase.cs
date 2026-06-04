@@ -22,7 +22,7 @@ public class DeleteCommandPhraseHandler : IRequestHandler<DeleteCommandPhraseCom
             .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
         if (phrase is null)
         {
-            return Result.Failure($"Фраза с Id {request.Id} не найдена.");
+            return Result.Failure($"Фразу з Id {request.Id} не знайдено.");
         }
 
         _dbContext.CommandPhrases.Remove(phrase);

@@ -33,7 +33,7 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Resul
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
         if (user is null)
         {
-            return Result.Failure($"Пользователь с Id {request.Id} не найден.");
+            return Result.Failure($"Користувача з Id {request.Id} не знайдено.");
         }
 
         user.Name = request.Name;

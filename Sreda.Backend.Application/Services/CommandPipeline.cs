@@ -7,9 +7,7 @@ using Sreda.Backend.Domain.Enums;
 namespace Sreda.Backend.Application.Services;
 
 /// <summary>
-/// Конвейер обработки команды: единый путь для голоса и текста.
-/// Сохраняет запрос, разрешает намерение (с уверенностью), проверяет доступ,
-/// выполняет команду и пишет наблюдаемость в журнал (Events).
+/// Конвеєр обробки команди: єдиний шлях для голосу та тексту.
 /// </summary>
 public class CommandPipeline : ICommandPipeline
 {
@@ -35,8 +33,9 @@ public class CommandPipeline : ICommandPipeline
 
     public async Task<CommandPipelineResult> ProcessAsync(
         string rawText,
-        int? userId,
+        int userId,
         CommandSource source,
+        string? responseLanguage = null,
         CancellationToken cancellationToken = default)
     {
         var command = new Command
@@ -59,14 +58,18 @@ public class CommandPipeline : ICommandPipeline
 
         var resolution = await _resolver.ResolveAsync(rawText, cancellationToken);
 
+        var lang = ResponseLanguageResolver.ResolveForPipeline(
+            responseLanguage, resolution.MatchedLanguage, rawText);
+
         string response;
+        AffectedDeviceSnapshot? affectedDevice = null;
 
         if (!resolution.Accepted || resolution.Command is null)
         {
             command.Status = CommandStatus.Rejected;
             response = resolution.Command is null
-                ? "Команда не распознана."
-                : "Команда распознана недостаточно уверенно.";
+                ? CommandResponseLocalizer.NotRecognized(lang)
+                : CommandResponseLocalizer.LowConfidence(lang);
 
             await _eventLogger.LogAsync(EventType.CommandRejected, new
             {
@@ -86,7 +89,7 @@ public class CommandPipeline : ICommandPipeline
             if (!access.IsAllowed)
             {
                 command.Status = CommandStatus.Rejected;
-                response = "Недостаточно прав для выполнения команды.";
+                response = CommandResponseLocalizer.AccessDenied(lang);
 
                 await _eventLogger.LogAsync(EventType.CommandRejected, new
                 {
@@ -104,9 +107,14 @@ public class CommandPipeline : ICommandPipeline
                 }
 
                 var execution = await _commandExecutor.ExecuteAsync(
-                    resolution.Command, resolution.Arguments, cancellationToken);
+                    resolution.Command,
+                    resolution.Arguments,
+                    new CommandExecutionContext(command.Id, lang),
+                    cancellationToken);
+
                 command.Status = execution.Status;
                 response = execution.Response;
+                affectedDevice = execution.AffectedDevice;
 
                 await _eventLogger.LogAsync(
                     execution.Success ? EventType.CommandExecuted : EventType.Error,
@@ -116,19 +124,40 @@ public class CommandPipeline : ICommandPipeline
                         success = execution.Success,
                         confidence = resolution.Confidence,
                         matchKind = resolution.MatchKind.ToString(),
-                        matchedPhrase = resolution.MatchedPhrase
+                        matchedPhrase = resolution.MatchedPhrase,
+                        deviceCode = affectedDevice?.Code
                     },
-                    command.Id, cancellationToken: cancellationToken);
+                    command.Id,
+                    deviceId: affectedDevice?.DeviceId,
+                    cancellationToken: cancellationToken);
+
+                if (execution.Success && affectedDevice is not null)
+                {
+                    await _eventLogger.LogAsync(
+                        EventType.DeviceUpdated,
+                        new
+                        {
+                            deviceCode = affectedDevice.Code,
+                            stateJson = affectedDevice.StateJson,
+                            commandCode = resolution.Command.Code
+                        },
+                        command.Id,
+                        deviceId: affectedDevice.DeviceId,
+                        cancellationToken: cancellationToken);
+                }
             }
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return new CommandPipelineResult(
+            command.Id,
+            userId,
             rawText,
             response,
             command.Status,
             resolution.Command?.Code,
-            resolution.Confidence);
+            resolution.Confidence,
+            affectedDevice);
     }
 }

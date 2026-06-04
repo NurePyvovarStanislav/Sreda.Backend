@@ -16,6 +16,7 @@ public interface ISredaDbContext
     DbSet<UserCommandOverride> UserCommandOverrides { get; }
     DbSet<Command> Commands { get; }
     DbSet<Device> Devices { get; }
+    DbSet<DeviceLocalizedLabel> DeviceLocalizedLabels { get; }
     DbSet<Event> Events { get; }
     DbSet<DeviceState> DeviceStates { get; }
 

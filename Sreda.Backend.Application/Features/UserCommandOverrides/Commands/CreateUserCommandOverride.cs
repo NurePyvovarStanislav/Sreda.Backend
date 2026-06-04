@@ -38,7 +38,7 @@ public class CreateUserCommandOverrideHandler
         var userExists = await _dbContext.Users.AnyAsync(u => u.Id == request.UserId, cancellationToken);
         if (!userExists)
         {
-            return Result.Failure<UserCommandOverrideDto>($"Пользователь с Id {request.UserId} не найден.");
+            return Result.Failure<UserCommandOverrideDto>($"Користувача з Id {request.UserId} не знайдено.");
         }
 
         var commandExists = await _dbContext.AvailableCommands
@@ -46,7 +46,7 @@ public class CreateUserCommandOverrideHandler
         if (!commandExists)
         {
             return Result.Failure<UserCommandOverrideDto>(
-                $"Команда с Id {request.AvailableCommandId} не найдена.");
+                $"Команду з Id {request.AvailableCommandId} не знайдено.");
         }
 
         var duplicate = await _dbContext.UserCommandOverrides.AnyAsync(
@@ -55,7 +55,7 @@ public class CreateUserCommandOverrideHandler
         if (duplicate)
         {
             return Result.Failure<UserCommandOverrideDto>(
-                "Переопределение для этой пары пользователь/команда уже существует.");
+                "Перевизначення для цієї пари користувач/команда вже існує.");
         }
 
         var entity = new UserCommandOverride

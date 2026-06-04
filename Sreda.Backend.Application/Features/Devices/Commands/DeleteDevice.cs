@@ -21,7 +21,7 @@ public class DeleteDeviceHandler : IRequestHandler<DeleteDeviceCommand, Result>
         var device = await _dbContext.Devices.FirstOrDefaultAsync(d => d.Id == request.Id, cancellationToken);
         if (device is null)
         {
-            return Result.Failure($"Устройство с Id {request.Id} не найдено.");
+            return Result.Failure($"Пристрій з Id {request.Id} не знайдено.");
         }
 
         _dbContext.Devices.Remove(device);

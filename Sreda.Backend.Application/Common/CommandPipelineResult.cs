@@ -3,12 +3,14 @@ using Sreda.Backend.Domain.Enums;
 namespace Sreda.Backend.Application.Common;
 
 /// <summary>
-/// Итог прохождения текста через конвейер обработки команды:
-/// ответ пользователю, статус, сопоставленная команда и уверенность.
+/// Ітог проходження тексту через конвеєр обробки команди.
 /// </summary>
 public record CommandPipelineResult(
+    int CommandId,
+    int UserId,
     string RawText,
     string Response,
     CommandStatus Status,
     string? CommandCode,
-    double Confidence);
+    double Confidence,
+    AffectedDeviceSnapshot? AffectedDevice);

@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Sreda.Backend.Application.Common;
+using Sreda.Backend.Application.Features.Devices;
 using Sreda.Backend.Application.Interfaces;
 using Sreda.Backend.Contracts.DTOs.Devices;
 
@@ -21,10 +22,11 @@ public class GetDevicesQueryHandler : IRequestHandler<GetDevicesQuery, Result<IR
     {
         var devices = await _dbContext.Devices
             .AsNoTracking()
+            .Include(d => d.Localizations)
             .OrderBy(d => d.Id)
-            .Select(d => new DeviceDto(d.Id, d.Code, d.Name, d.Type, d.Location, d.IsActive, d.CreatedAt))
             .ToListAsync(cancellationToken);
 
-        return Result.Success<IReadOnlyList<DeviceDto>>(devices);
+        var dtos = devices.Select(DeviceMapping.ToDto).ToList();
+        return Result.Success<IReadOnlyList<DeviceDto>>(dtos);
     }
 }

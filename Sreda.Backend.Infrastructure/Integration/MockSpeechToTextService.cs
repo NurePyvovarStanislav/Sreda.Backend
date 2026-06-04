@@ -1,4 +1,6 @@
+using Sreda.Backend.Application.Common;
 using Sreda.Backend.Application.Interfaces;
+using Sreda.Backend.Application.Services;
 
 namespace Sreda.Backend.Infrastructure.Integration;
 
@@ -8,12 +10,12 @@ namespace Sreda.Backend.Infrastructure.Integration;
 /// </summary>
 public class MockSpeechToTextService : ISpeechToTextService
 {
-    public async Task<string> TranscribeAsync(Stream audioStream, CancellationToken cancellationToken = default)
+    public async Task<SpeechTranscription> TranscribeAsync(Stream audioStream, CancellationToken cancellationToken = default)
     {
-        // Полностью вычитываем поток, имитируя обработку аудио.
         using var buffer = new MemoryStream();
         await audioStream.CopyToAsync(buffer, cancellationToken);
 
-        return "привет среда";
+        const string text = "привет среда";
+        return new SpeechTranscription(text, ResponseLanguageResolver.InferFromText(text));
     }
 }

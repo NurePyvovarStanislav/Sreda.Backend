@@ -47,12 +47,12 @@ public class SendDeviceCommandHandler : IRequestHandler<SendDeviceCommandCommand
 
         if (device is null)
         {
-            return Result.Failure($"Устройство с Id {request.DeviceId} не найдено.");
+            return Result.Failure($"Пристрій з Id {request.DeviceId} не знайдено.");
         }
 
         if (!device.IsActive)
         {
-            return Result.Failure($"Устройство '{device.Code}' неактивно — команда не отправлена.");
+            return Result.Failure($"Пристрій '{device.Code}' неактивний — команду не надіслано.");
         }
 
         var payload = new

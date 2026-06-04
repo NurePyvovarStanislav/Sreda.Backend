@@ -7,7 +7,7 @@ public class SpeakTextCommandValidator : AbstractValidator<SpeakTextCommand>
     public SpeakTextCommandValidator()
     {
         RuleFor(x => x.Text)
-            .NotEmpty().WithMessage("Текст для озвучивания обязателен.")
-            .MaximumLength(2000).WithMessage("Текст слишком длинный (максимум 2000 символов).");
+            .NotEmpty().WithMessage("Текст для озвучування обов'язковий.")
+            .MaximumLength(2000).WithMessage("Текст занадто довгий (максимум 2000 символів).");
     }
 }

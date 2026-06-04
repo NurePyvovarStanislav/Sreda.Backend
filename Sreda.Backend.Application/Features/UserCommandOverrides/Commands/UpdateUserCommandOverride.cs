@@ -22,7 +22,7 @@ public class UpdateUserCommandOverrideHandler : IRequestHandler<UpdateUserComman
             .FirstOrDefaultAsync(o => o.Id == request.Id, cancellationToken);
         if (entity is null)
         {
-            return Result.Failure($"Переопределение с Id {request.Id} не найдено.");
+            return Result.Failure($"Перевизначення з Id {request.Id} не знайдено.");
         }
 
         entity.IsAllowed = request.IsAllowed;

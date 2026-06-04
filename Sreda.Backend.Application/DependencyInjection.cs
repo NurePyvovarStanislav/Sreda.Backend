@@ -27,9 +27,10 @@ public static class DependencyInjection
             configuration.GetSection(CommandResolverOptions.SectionName));
 
         services.AddSingleton(TimeProvider.System);
-        services.AddSingleton<ICommandExecutor, BasicCommandExecutor>();
+        services.AddScoped<IDeviceTargetSelector, DeviceTargetSelector>();
+        services.AddScoped<IEffectiveUserResolver, EffectiveUserResolver>();
+        services.AddScoped<ICommandExecutor, CommandExecutor>();
 
-        // Распознавание намерений (Этап 10 — AI Command Resolver).
         services.AddScoped<ICommandResolver, CommandResolverService>();
         services.AddScoped<ICommandAccessPolicy, CommandAccessPolicy>();
         services.AddScoped<ICommandPipeline, CommandPipeline>();

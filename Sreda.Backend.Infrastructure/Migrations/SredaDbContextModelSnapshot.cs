@@ -180,6 +180,39 @@ namespace Sreda.Backend.Infrastructure.Migrations
                     b.ToTable("Devices", (string)null);
                 });
 
+            modelBuilder.Entity("Sreda.Backend.Domain.Entities.DeviceLocalizedLabel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DeviceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId", "Language")
+                        .IsUnique();
+
+                    b.ToTable("DeviceLocalizedLabels", (string)null);
+                });
+
             modelBuilder.Entity("Sreda.Backend.Domain.Entities.DeviceState", b =>
                 {
                     b.Property<int>("Id")
@@ -369,6 +402,17 @@ namespace Sreda.Backend.Infrastructure.Migrations
                     b.Navigation("AvailableCommand");
                 });
 
+            modelBuilder.Entity("Sreda.Backend.Domain.Entities.DeviceLocalizedLabel", b =>
+                {
+                    b.HasOne("Sreda.Backend.Domain.Entities.Device", "Device")
+                        .WithMany("Localizations")
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Device");
+                });
+
             modelBuilder.Entity("Sreda.Backend.Domain.Entities.DeviceState", b =>
                 {
                     b.HasOne("Sreda.Backend.Domain.Entities.Device", "Device")
@@ -444,6 +488,8 @@ namespace Sreda.Backend.Infrastructure.Migrations
             modelBuilder.Entity("Sreda.Backend.Domain.Entities.Device", b =>
                 {
                     b.Navigation("Events");
+
+                    b.Navigation("Localizations");
 
                     b.Navigation("State");
                 });

@@ -37,7 +37,7 @@ public class UpdateCommandPhraseHandler : IRequestHandler<UpdateCommandPhraseCom
             .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
         if (phrase is null)
         {
-            return Result.Failure($"Фраза с Id {request.Id} не найдена.");
+            return Result.Failure($"Фразу з Id {request.Id} не знайдено.");
         }
 
         phrase.Phrase = request.Phrase;

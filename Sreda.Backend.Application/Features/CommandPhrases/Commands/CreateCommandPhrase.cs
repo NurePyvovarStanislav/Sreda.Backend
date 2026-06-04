@@ -41,7 +41,7 @@ public class CreateCommandPhraseHandler : IRequestHandler<CreateCommandPhraseCom
         if (!commandExists)
         {
             return Result.Failure<CommandPhraseDto>(
-                $"Команда с Id {request.AvailableCommandId} не найдена.");
+                $"Команду з Id {request.AvailableCommandId} не знайдено.");
         }
 
         var phrase = new CommandPhrase

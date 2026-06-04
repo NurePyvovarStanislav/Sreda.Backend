@@ -27,12 +27,12 @@ public class DevicesController : ApiControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateDeviceRequest request, CancellationToken cancellationToken)
         => FromResult(await _mediator.Send(new CreateDeviceCommand(
-            request.Code, request.Name, request.Type, request.Location, request.IsActive), cancellationToken));
+            request.Code, request.Localizations, request.Type, request.IsActive), cancellationToken));
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateDeviceRequest request, CancellationToken cancellationToken)
         => FromResult(await _mediator.Send(new UpdateDeviceCommand(
-            id, request.Name, request.Type, request.Location, request.IsActive), cancellationToken));
+            id, request.Localizations, request.Type, request.IsActive), cancellationToken));
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
@@ -48,7 +48,7 @@ public class DevicesController : ApiControllerBase
         => FromResult(await _mediator.Send(new UpdateDeviceStateCommand(
             id, request.IsOnline, request.StateJson), cancellationToken));
 
-    /// <summary>Отправляет команду устройству через шлюз (MQTT).</summary>
+    /// <summary>Надсилає команду пристрою через шлюз (MQTT).</summary>
     [HttpPost("{id:int}/command")]
     public async Task<IActionResult> SendCommand(
         int id, [FromBody] SendDeviceCommandRequest request, CancellationToken cancellationToken)

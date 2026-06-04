@@ -7,6 +7,6 @@ public class ProcessVoiceCommandValidator : AbstractValidator<ProcessVoiceComman
     public ProcessVoiceCommandValidator()
     {
         RuleFor(x => x.Audio)
-            .NotNull().WithMessage("Аудиопоток обязателен.");
+            .NotNull().WithMessage("Аудіопотік обов'язковий.");
     }
 }

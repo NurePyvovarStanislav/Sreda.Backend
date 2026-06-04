@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Sreda.Backend.Application.Common;
 using Sreda.Backend.Application.Interfaces;
+using Sreda.Backend.Application.Services;
 using Sreda.Backend.Infrastructure.Integration.Audio;
 using Sreda.Backend.Infrastructure.Integration.Options;
 
@@ -10,6 +12,7 @@ namespace Sreda.Backend.Infrastructure.Integration;
 /// Распознавание речи через whisper.cpp (whisper-cli).
 /// Сохраняет входной аудиопоток во временный файл, при необходимости конвертирует
 /// его в WAV 16 kHz mono через ffmpeg, запускает CLI и читает результат из txt.
+/// Язык берётся из строки auto-detected language в выводе CLI.
 /// </summary>
 public class WhisperSpeechToTextService : ISpeechToTextService
 {
@@ -27,7 +30,7 @@ public class WhisperSpeechToTextService : ISpeechToTextService
         _logger = logger;
     }
 
-    public async Task<string> TranscribeAsync(Stream audioStream, CancellationToken cancellationToken = default)
+    public async Task<SpeechTranscription> TranscribeAsync(Stream audioStream, CancellationToken cancellationToken = default)
     {
         ValidateConfiguration();
 
@@ -48,17 +51,24 @@ public class WhisperSpeechToTextService : ISpeechToTextService
                 await audioStream.CopyToAsync(fileStream, cancellationToken);
             }
 
-            // Конвертируем только если аудио не в целевом формате (WAV 16 kHz mono PCM)
-            // и не в формате, который whisper читает сам (MP3/FLAC).
             string audioPath;
-            if (AudioFormatDetector.CanUseDirectly(sourcePath))
+            AudioFormatDetector.TryDescribe(sourcePath, out var formatInfo);
+
+            if (formatInfo.CanUseDirectly)
             {
                 audioPath = sourcePath;
+                if (formatInfo.Kind == "WAV" && formatInfo.SampleRateHz is { } hz)
+                {
+                    _logger.LogDebug(
+                        "Аудио WAV {SampleRateKHz} kHz mono — передаём в whisper без ffmpeg.",
+                        hz / 1000.0);
+                }
             }
             else
             {
                 _logger.LogInformation(
-                    "Аудио не в целевом формате — конвертирую через ffmpeg в WAV 16 kHz mono.");
+                    "Конвертирую через ffmpeg в WAV 16 kHz mono ({Reason}).",
+                    formatInfo.DescribeConversionReason());
                 await _audioConverter.ConvertToWhisperWavAsync(sourcePath, convertedPath, cancellationToken);
                 audioPath = convertedPath;
                 usedConvertedFile = true;
@@ -91,8 +101,27 @@ public class WhisperSpeechToTextService : ISpeechToTextService
                     $"Ожидался файл: {outputTxtPath}. stderr: {result.StandardError.Trim()}");
             }
 
-            var recognizedText = await File.ReadAllTextAsync(outputTxtPath, cancellationToken);
-            return recognizedText.Trim();
+            var recognizedText = (await File.ReadAllTextAsync(outputTxtPath, cancellationToken)).Trim();
+
+            var detectedRaw = WhisperOutputParser.TryParseDetectedLanguage(
+                result.StandardOutput, result.StandardError);
+            var language = ResponseLanguageResolver.Normalize(detectedRaw);
+
+            if (detectedRaw is null)
+            {
+                language = ResponseLanguageResolver.InferFromText(recognizedText);
+                _logger.LogWarning(
+                    "whisper-cli не сообщил auto-detected language; использован fallback: {Language}",
+                    language);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "Whisper auto-detected language: {Raw} → {Normalized}",
+                    detectedRaw, language);
+            }
+
+            return new SpeechTranscription(recognizedText, language);
         }
         finally
         {
@@ -107,7 +136,6 @@ public class WhisperSpeechToTextService : ISpeechToTextService
 
     private string BuildArguments(string inputPath, string outputPrefix)
     {
-        // -m модель, -f вход, -l язык, -otxt вывод в txt, -of префикс файла, -nt без таймкодов
         var arguments =
             $"-m \"{_options.ModelPath}\" " +
             $"-f \"{inputPath}\" " +

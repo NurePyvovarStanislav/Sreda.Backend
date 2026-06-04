@@ -37,6 +37,11 @@ public class DeviceConfiguration : IEntityTypeConfiguration<Device>
             .HasForeignKey<DeviceState>(s => s.DeviceId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasMany(d => d.Localizations)
+            .WithOne(l => l.Device)
+            .HasForeignKey(l => l.DeviceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasMany(d => d.Events)
             .WithOne(e => e.Device)
             .HasForeignKey(e => e.DeviceId)

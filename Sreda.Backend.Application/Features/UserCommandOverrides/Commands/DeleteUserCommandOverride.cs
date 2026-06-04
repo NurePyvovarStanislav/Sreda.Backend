@@ -22,7 +22,7 @@ public class DeleteUserCommandOverrideHandler : IRequestHandler<DeleteUserComman
             .FirstOrDefaultAsync(o => o.Id == request.Id, cancellationToken);
         if (entity is null)
         {
-            return Result.Failure($"Переопределение с Id {request.Id} не найдено.");
+            return Result.Failure($"Перевизначення з Id {request.Id} не знайдено.");
         }
 
         _dbContext.UserCommandOverrides.Remove(entity);

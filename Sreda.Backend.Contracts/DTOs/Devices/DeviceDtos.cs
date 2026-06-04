@@ -2,26 +2,30 @@ using Sreda.Backend.Domain.Enums;
 
 namespace Sreda.Backend.Contracts.DTOs.Devices;
 
+public record DeviceLocalizationDto(
+    string Language,
+    string Name,
+    string? Location);
+
 public record DeviceDto(
     int Id,
     string Code,
     string Name,
-    DeviceType Type,
     string? Location,
+    IReadOnlyList<DeviceLocalizationDto> Localizations,
+    DeviceType Type,
     bool IsActive,
     DateTime CreatedAt);
 
 public record CreateDeviceRequest(
     string Code,
-    string Name,
+    IReadOnlyList<DeviceLocalizationDto> Localizations,
     DeviceType Type,
-    string? Location,
     bool IsActive = true);
 
 public record UpdateDeviceRequest(
-    string Name,
+    IReadOnlyList<DeviceLocalizationDto> Localizations,
     DeviceType Type,
-    string? Location,
     bool IsActive);
 
 public record DeviceStateDto(

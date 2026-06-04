@@ -45,7 +45,7 @@ public sealed class MqttDeviceGateway : IDeviceGateway, IAsyncDisposable
     {
         if (!_options.Enabled)
         {
-            _logger.LogInformation("MQTT-шлюз выключен (Mqtt:Enabled = false) — пропускаем подключение.");
+            _logger.LogInformation("MQTT-шлюз вимкнено (Mqtt:Enabled = false) — підключення пропущено.");
             return;
         }
 
@@ -61,7 +61,7 @@ public sealed class MqttDeviceGateway : IDeviceGateway, IAsyncDisposable
         _watchdogLoop = Task.Run(() => RunOfflineWatchdogAsync(_cts.Token), CancellationToken.None);
 
         _logger.LogInformation(
-            "MQTT-шлюз запущен. Брокер {Host}:{Port}, префикс топиков '{Prefix}'.",
+            "MQTT-шлюз запущено. Брокер {Host}:{Port}, префікс топіків '{Prefix}'.",
             _options.Host, _options.Port, _options.TopicPrefix);
 
         await Task.CompletedTask;
@@ -101,7 +101,7 @@ public sealed class MqttDeviceGateway : IDeviceGateway, IAsyncDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Ошибка при отключении MQTT-клиента.");
+                _logger.LogWarning(ex, "Помилка під час відключення MQTT-клієнта.");
             }
         }
     }
@@ -110,12 +110,12 @@ public sealed class MqttDeviceGateway : IDeviceGateway, IAsyncDisposable
     {
         if (!_options.Enabled)
         {
-            throw new InvalidOperationException("MQTT-шлюз выключен (Mqtt:Enabled = false).");
+            throw new InvalidOperationException("MQTT-шлюз вимкнено (Mqtt:Enabled = false).");
         }
 
         if (_client is null || !_client.IsConnected)
         {
-            throw new InvalidOperationException("Нет соединения с MQTT-брокером — команда не отправлена.");
+            throw new InvalidOperationException("Немає з'єднання з MQTT-брокером — команду не надіслано.");
         }
 
         var json = JsonSerializer.Serialize(payload);
@@ -129,7 +129,7 @@ public sealed class MqttDeviceGateway : IDeviceGateway, IAsyncDisposable
 
         await _client.PublishAsync(message, cancellationToken);
 
-        _logger.LogInformation("Команда отправлена устройству {DeviceCode} в топик {Topic}.", deviceCode, topic);
+        _logger.LogInformation("Команду надіслано пристрою {DeviceCode} у топік {Topic}.", deviceCode, topic);
     }
 
     private async Task MaintainConnectionAsync(CancellationToken cancellationToken)
@@ -159,7 +159,7 @@ public sealed class MqttDeviceGateway : IDeviceGateway, IAsyncDisposable
             catch (Exception ex)
             {
                 _logger.LogWarning(
-                    ex, "Не удалось подключиться к MQTT-брокеру {Host}:{Port}. Повтор через {Delay} с.",
+                    ex, "Не вдалося підключитися до MQTT-брокера {Host}:{Port}. Повтор через {Delay} с.",
                     _options.Host, _options.Port, delay.TotalSeconds);
             }
 
@@ -186,17 +186,17 @@ public sealed class MqttDeviceGateway : IDeviceGateway, IAsyncDisposable
 
             await _client!.SubscribeAsync(subscribeOptions);
 
-            _logger.LogInformation("Подключено к MQTT-брокеру, подписка на топики устройств оформлена.");
+            _logger.LogInformation("Підключено до MQTT-брокера, підписку на топіки пристроїв оформлено.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Ошибка при подписке на MQTT-топики после подключения.");
+            _logger.LogError(ex, "Помилка підписки на MQTT-топіки після підключення.");
         }
     }
 
     private Task OnDisconnectedAsync(MqttClientDisconnectedEventArgs args)
     {
-        _logger.LogWarning("Соединение с MQTT-брокером потеряно ({Reason}). Будет выполнено переподключение.", args.Reason);
+        _logger.LogWarning("З'єднання з MQTT-брокером втрачено ({Reason}). Буде перепідключення.", args.Reason);
         return Task.CompletedTask;
     }
 
@@ -227,7 +227,7 @@ public sealed class MqttDeviceGateway : IDeviceGateway, IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Ошибка обработки MQTT-сообщения из топика {Topic}.", topic);
+            _logger.LogError(ex, "Помилка обробки MQTT-повідомлення з топіка {Topic}.", topic);
         }
     }
 
@@ -246,7 +246,7 @@ public sealed class MqttDeviceGateway : IDeviceGateway, IAsyncDisposable
 
         if (device is null)
         {
-            _logger.LogWarning("Получено сообщение от неизвестного устройства '{DeviceCode}'.", deviceCode);
+            _logger.LogWarning("Отримано повідомлення від невідомого пристрою '{DeviceCode}'.", deviceCode);
             return;
         }
 
@@ -306,7 +306,7 @@ public sealed class MqttDeviceGateway : IDeviceGateway, IAsyncDisposable
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Ошибка в стороже оффлайн-устройств.");
+                    _logger.LogError(ex, "Помилка в сторожі офлайн-пристроїв.");
                 }
             }
         }

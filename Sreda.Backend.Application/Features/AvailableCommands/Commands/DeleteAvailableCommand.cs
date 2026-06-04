@@ -22,7 +22,7 @@ public class DeleteAvailableCommandHandler : IRequestHandler<DeleteAvailableComm
             .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
         if (command is null)
         {
-            return Result.Failure($"Команда с Id {request.Id} не найдена.");
+            return Result.Failure($"Команду з Id {request.Id} не знайдено.");
         }
 
         _dbContext.AvailableCommands.Remove(command);

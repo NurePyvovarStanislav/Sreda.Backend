@@ -18,6 +18,7 @@ public class SredaDbContext : DbContext, ISredaDbContext
     public DbSet<UserCommandOverride> UserCommandOverrides => Set<UserCommandOverride>();
     public DbSet<Command> Commands => Set<Command>();
     public DbSet<Device> Devices => Set<Device>();
+    public DbSet<DeviceLocalizedLabel> DeviceLocalizedLabels => Set<DeviceLocalizedLabel>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<DeviceState> DeviceStates => Set<DeviceState>();
 

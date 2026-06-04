@@ -47,7 +47,7 @@ public class CreateAvailableCommandHandler
             .AnyAsync(c => c.Code == request.Code, cancellationToken);
         if (codeExists)
         {
-            return Result.Failure<AvailableCommandDto>($"Команда с кодом '{request.Code}' уже существует.");
+            return Result.Failure<AvailableCommandDto>($"Команда з кодом '{request.Code}' вже існує.");
         }
 
         var command = new AvailableCommand

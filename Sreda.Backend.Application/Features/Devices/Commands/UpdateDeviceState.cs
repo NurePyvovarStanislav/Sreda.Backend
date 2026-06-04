@@ -28,7 +28,7 @@ public class UpdateDeviceStateHandler : IRequestHandler<UpdateDeviceStateCommand
         var deviceExists = await _dbContext.Devices.AnyAsync(d => d.Id == request.DeviceId, cancellationToken);
         if (!deviceExists)
         {
-            return Result.Failure<DeviceStateDto>($"Устройство с Id {request.DeviceId} не найдено.");
+            return Result.Failure<DeviceStateDto>($"Пристрій з Id {request.DeviceId} не знайдено.");
         }
 
         var now = DateTime.UtcNow;

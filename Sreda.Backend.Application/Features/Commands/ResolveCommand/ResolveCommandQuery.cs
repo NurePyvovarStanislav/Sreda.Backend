@@ -4,12 +4,8 @@ using Sreda.Backend.Application.Common;
 using Sreda.Backend.Application.Interfaces;
 using Sreda.Backend.Contracts.DTOs;
 
-namespace Sreda.Backend.Application.Features.Voice.Queries.ResolveCommand;
+namespace Sreda.Backend.Application.Features.Commands.ResolveCommand;
 
-/// <summary>
-/// Диагностический разбор текста: какой командой он распознаётся и с какой
-/// уверенностью. Ничего не выполняет и не пишет в историю — только сопоставление.
-/// </summary>
 public record ResolveCommandQuery(string Text) : IRequest<Result<CommandResolveResponse>>;
 
 public class ResolveCommandQueryValidator : AbstractValidator<ResolveCommandQuery>
@@ -29,7 +25,9 @@ public class ResolveCommandQueryHandler : IRequestHandler<ResolveCommandQuery, R
         _resolver = resolver;
     }
 
-    public async Task<Result<CommandResolveResponse>> Handle(ResolveCommandQuery request, CancellationToken cancellationToken)
+    public async Task<Result<CommandResolveResponse>> Handle(
+        ResolveCommandQuery request,
+        CancellationToken cancellationToken)
     {
         var resolution = await _resolver.ResolveAsync(request.Text, cancellationToken);
 

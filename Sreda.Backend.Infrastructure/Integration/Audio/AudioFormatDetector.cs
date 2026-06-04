@@ -2,12 +2,12 @@ namespace Sreda.Backend.Infrastructure.Integration.Audio;
 
 /// <summary>
 /// Определяет, нужна ли конвертация через ffmpeg перед whisper.cpp.
-/// Конвертация выполняется только если формат не читается whisper напрямую
-/// (MP3/FLAC) и не является целевым WAV 16 kHz mono PCM 16-bit.
+/// Конвертация — если формат не читается whisper (MP3/FLAC) и не PCM WAV mono 16-bit
+/// (частота дискретизации whisper приводит к 16 kHz сам; ffmpeg нужен для стерео/32-bit и т.д.).
 /// </summary>
 internal static class AudioFormatDetector
 {
-    private const int TargetSampleRate = 16000;
+    private const int PreferredSampleRate = 16000;
     private const short TargetChannels = 1;
     private const short TargetBitsPerSample = 16;
     private const short PcmFormatTag = 1;
@@ -15,28 +15,88 @@ internal static class AudioFormatDetector
     /// <summary>
     /// true — whisper-cli может взять файл как есть, ffmpeg не нужен.
     /// </summary>
-    public static bool CanUseDirectly(string path)
+    public static bool CanUseDirectly(string path) =>
+        TryDescribe(path, out var info) && info.CanUseDirectly;
+
+    /// <summary>Описание входного файла для логов и диагностики.</summary>
+    public static bool TryDescribe(string path, out AudioFormatInfo info)
     {
+        info = AudioFormatInfo.Unknown;
+
         if (!File.Exists(path))
         {
             return false;
         }
 
-        if (IsMp3(path) || IsFlac(path))
+        if (IsMp3(path))
         {
-            // whisper.cpp (miniaudio) читает MP3/FLAC и сам приводит к 16 kHz mono.
+            info = new AudioFormatInfo("MP3", null, null, null, true);
+            return true;
+        }
+
+        if (IsFlac(path))
+        {
+            info = new AudioFormatInfo("FLAC", null, null, null, true);
             return true;
         }
 
         if (TryReadWavPcmFormat(path, out var sampleRate, out var channels, out var bitsPerSample, out var formatTag))
         {
-            return formatTag == PcmFormatTag
-                   && sampleRate == TargetSampleRate
-                   && channels == TargetChannels
-                   && bitsPerSample == TargetBitsPerSample;
+            var isPcm = formatTag == PcmFormatTag;
+            var isMono16 = isPcm && channels == TargetChannels && bitsPerSample == TargetBitsPerSample;
+            var canUseDirectly = isMono16 && sampleRate > 0;
+
+            info = new AudioFormatInfo(
+                "WAV",
+                sampleRate,
+                channels,
+                bitsPerSample,
+                canUseDirectly);
+
+            return true;
         }
 
-        return false;
+        var ext = Path.GetExtension(path);
+        info = new AudioFormatInfo(string.IsNullOrWhiteSpace(ext) ? "unknown" : ext.TrimStart('.'), null, null, null, false);
+        return true;
+    }
+
+    internal readonly record struct AudioFormatInfo(
+        string Kind,
+        int? SampleRateHz,
+        short? Channels,
+        short? BitsPerSample,
+        bool CanUseDirectly)
+    {
+        public static AudioFormatInfo Unknown => new("unknown", null, null, null, false);
+
+        public string DescribeConversionReason()
+        {
+            if (Kind is "MP3" or "FLAC")
+            {
+                return $"{Kind} (whisper читает напрямую)";
+            }
+
+            if (Kind == "WAV" && SampleRateHz is not null && Channels is not null && BitsPerSample is not null)
+            {
+                if (Channels != TargetChannels)
+                {
+                    return $"WAV {SampleRateHz / 1000.0:0.#} kHz, {Channels} кан.(а), {BitsPerSample} bit — нужен mono";
+                }
+
+                if (BitsPerSample != TargetBitsPerSample)
+                {
+                    return $"WAV {SampleRateHz / 1000.0:0.#} kHz, PCM {BitsPerSample} bit — нужен 16 bit PCM";
+                }
+
+                if (SampleRateHz != PreferredSampleRate)
+                {
+                    return $"WAV {SampleRateHz / 1000.0:0.#} kHz mono 16 bit (оптимально {PreferredSampleRate / 1000} kHz)";
+                }
+            }
+
+            return Kind;
+        }
     }
 
     private static bool IsFlac(string path)

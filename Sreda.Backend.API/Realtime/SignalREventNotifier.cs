@@ -28,7 +28,7 @@ public class SignalREventNotifier : IEventNotifier
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Не удалось опубликовать событие {EventId} через SignalR.", @event.Id);
+            _logger.LogWarning(ex, "Не вдалося опублікувати подію {EventId} через SignalR.", @event.Id);
         }
     }
 }

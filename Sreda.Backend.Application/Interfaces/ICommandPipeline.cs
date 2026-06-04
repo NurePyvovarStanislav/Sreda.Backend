@@ -10,7 +10,8 @@ public interface ICommandPipeline
 {
     Task<CommandPipelineResult> ProcessAsync(
         string rawText,
-        int? userId,
+        int userId,
         CommandSource source,
+        string? responseLanguage = null,
         CancellationToken cancellationToken = default);
 }

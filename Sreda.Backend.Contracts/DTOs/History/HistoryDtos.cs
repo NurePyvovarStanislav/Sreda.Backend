@@ -7,6 +7,7 @@ public record CommandHistoryDto(
     int? UserId,
     string RawText,
     int? AvailableCommandId,
+    string? CommandCode,
     string? ArgumentsJson,
     CommandStatus Status,
     DateTime CreatedAt);

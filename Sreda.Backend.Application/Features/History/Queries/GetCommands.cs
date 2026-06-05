@@ -43,7 +43,14 @@ public class GetCommandsQueryHandler : IRequestHandler<GetCommandsQuery, Result<
             .Skip(skip)
             .Take(take)
             .Select(c => new CommandHistoryDto(
-                c.Id, c.UserId, c.RawText, c.AvailableCommandId, c.ArgumentsJson, c.Status, c.CreatedAt))
+                c.Id,
+                c.UserId,
+                c.RawText,
+                c.AvailableCommandId,
+                c.AvailableCommand != null ? c.AvailableCommand.Code : null,
+                c.ArgumentsJson,
+                c.Status,
+                c.CreatedAt))
             .ToListAsync(cancellationToken);
 
         return Result.Success<IReadOnlyList<CommandHistoryDto>>(commands);
